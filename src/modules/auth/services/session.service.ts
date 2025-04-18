@@ -1,16 +1,18 @@
 import { Cache } from 'cache-manager';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
-import { Inject, Injectable } from '@nestjs/common';
+import { Inject, Injectable, Logger } from '@nestjs/common';
 import { SelectUser } from '@/common/database/schemas/users.schema';
 import * as crypto from 'node:crypto';
 import { ISessionData } from '../interface/session.interface';
 import type { Response } from 'express';
 import { ConfigService } from '@nestjs/config';
+import { tryCatch } from '@/common/utils/try-catch.utils';
 
 const SESSION_EXPIRY = 86400; // 24 hours
 
 @Injectable()
 export class SessionService {
+  private readonly logger = new Logger(SessionService.name);
   constructor(
     @Inject(CACHE_MANAGER) private readonly cacheManager: Cache,
     private readonly config: ConfigService,
@@ -44,5 +46,23 @@ export class SessionService {
     });
 
     return result;
+  }
+
+  async deleteUserSession(sessionId: string, res: Response) {
+    const deleteResult = await tryCatch(
+      this.cacheManager.del(`session:${sessionId}`),
+    );
+    if (deleteResult.error) {
+      this.logger.error('Error deleting session', deleteResult.error);
+      return false;
+    }
+
+    res.clearCookie('session-id', {
+      httpOnly: true,
+      sameSite: 'lax',
+      secure: this.config.getOrThrow('NODE_ENV') === 'production',
+    });
+
+    return true;
   }
 }
