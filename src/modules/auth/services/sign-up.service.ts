@@ -12,6 +12,7 @@ import {
 import type { Response } from 'express';
 import type { SignUpDto } from '../dtos/sign-up.dto';
 import { SessionService } from './session.service';
+import { EmailService } from './email.service';
 
 @Injectable()
 export class SignUpService {
@@ -19,6 +20,7 @@ export class SignUpService {
   constructor(
     private readonly sessionService: SessionService,
     private readonly usersService: UsersService,
+    private readonly emailService: EmailService,
   ) {}
 
   /**
@@ -40,7 +42,7 @@ export class SignUpService {
       );
 
       throw new InternalServerErrorException(
-        `Failed to verify email availability. Please try again later.`,
+        `We're having trouble processing your sign up. Please try again later.`,
         { cause: emailResult.error },
       );
     }
@@ -60,7 +62,7 @@ export class SignUpService {
       );
 
       throw new InternalServerErrorException(
-        `Failed to verify username availability. Please try again later.`,
+        `We're having trouble processing your sign up. Please try again later.`,
         { cause: usernameResult.error },
       );
     }
@@ -94,11 +96,15 @@ export class SignUpService {
       `Successfully created user account for ${dto.username} (ID: ${createUserResult.data.id})`,
     );
 
+    // Create a session for the user
     await this.sessionService.createUserSession(createUserResult.data, res);
-    // TODO: Email verification link
+
+    // Send a verification email
+    void this.emailService.sendEmailVerification(createUserResult.data);
     return {
       success: true,
-      message: 'Sign up successful',
+      message:
+        'Sign up successful. Please check your email to verify your account.',
       data: this.usersService.sanitizeUser(createUserResult.data),
     };
   }

@@ -6,6 +6,8 @@ import { CacheModule } from '@nestjs/cache-manager';
 import { ConfigService } from '@nestjs/config';
 import { UsersService } from '../users/users.service';
 import { SignInService } from './services/sign-in.service';
+import { EmailService } from './services/email.service';
+import { VerifyEmailService } from './services/verify-email.service';
 
 @Module({
   imports: [
@@ -17,6 +19,13 @@ import { SignInService } from './services/sign-in.service';
     }),
   ],
   controllers: [AuthController],
-  providers: [SignUpService, SignInService, SessionService, UsersService],
+  providers: [
+    SignUpService,
+    SignInService,
+    SessionService,
+    EmailService,
+    UsersService,
+    VerifyEmailService,
+  ],
 })
 export class AuthModule {}

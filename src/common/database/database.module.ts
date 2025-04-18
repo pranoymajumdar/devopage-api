@@ -12,6 +12,9 @@ import { drizzle } from 'drizzle-orm/node-postgres';
       useFactory: (configService: ConfigService) => {
         const pool = new Pool({
           connectionString: configService.getOrThrow('DATABASE_URL'),
+          max: 20, // Increase connection pool size
+          idleTimeoutMillis: 30000,
+          connectionTimeoutMillis: 2000,
         });
         return drizzle(pool);
       },
