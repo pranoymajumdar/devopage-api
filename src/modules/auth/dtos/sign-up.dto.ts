@@ -4,7 +4,7 @@ import { IsString, IsEmail, IsNotEmpty } from 'class-validator';
 export class SignUpDto {
   @IsString()
   @IsNotEmpty()
-  @Transform(({ value }: { value: string }) => value.toLowerCase().trim())
+  @Transform(({ value }: { value: string }) => value.trim())
   name: string;
 
   @IsString()

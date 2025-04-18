@@ -25,7 +25,7 @@ export class UsersService {
     return user;
   }
   async findUserBy(
-    type: 'email' | 'id' | 'username' | 'loda',
+    type: 'email' | 'id' | 'username',
     value: string,
   ): Promise<SelectUser | null> {
     const [user] = await this.db
