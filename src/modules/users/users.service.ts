@@ -1,37 +1,80 @@
-import { DATABASE_CONNECTION } from '@/common/database/database.connection';
 import {
-  InsertUser,
-  PublicUser,
-  SelectUser,
-  usersTable,
-} from '@/common/database/schemas/users.schema';
-import { Inject, Injectable } from '@nestjs/common';
-import { eq } from 'drizzle-orm';
-import type { NodePgDatabase } from 'drizzle-orm/node-postgres';
+  ConflictException,
+  Injectable,
+  InternalServerErrorException,
+  Logger,
+  NotFoundException,
+} from '@nestjs/common';
+import { User } from './users.entity';
+import { Repository } from 'typeorm';
+import { InjectRepository } from '@nestjs/typeorm';
+import { tryCatch } from '@/common/utils/try-catch.utils';
+import { SignUpDto } from '../auth/dtos';
 
 @Injectable()
 export class UsersService {
+  private readonly logger: Logger = new Logger(UsersService.name);
   constructor(
-    @Inject(DATABASE_CONNECTION) private readonly db: NodePgDatabase,
+    @InjectRepository(User)
+    private readonly usersRepository: Repository<User>,
   ) {}
-  sanitizeUser(user: SelectUser): PublicUser {
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { password, salt, ...rest } = user;
-    return rest;
-  }
-  async createUser(values: InsertUser): Promise<SelectUser> {
-    const [user] = await this.db.insert(usersTable).values(values).returning();
+  /**
+   * Create a new user
+   * @param dto - containing user details
+   * @returns Created user
+   */
+  async create(dto: SignUpDto): Promise<User> {
+    await this.ensureEmailAndUsernameAreUnique(dto);
 
-    return user;
+    const user = this.usersRepository.create({
+      name: dto.name,
+      email: dto.email,
+      username: dto.username,
+      password: dto.password,
+    });
+    const result = await tryCatch(this.usersRepository.save(user));
+
+    if (result.error) {
+      this.logger.error('Error creating user', result.error);
+      throw new InternalServerErrorException(
+        'An error occurred while creating the user, please try again later.',
+      );
+    }
+    return result.data;
   }
-  async findUserBy(
-    type: 'email' | 'id' | 'username',
-    value: string,
-  ): Promise<SelectUser | null> {
-    const [user] = await this.db
-      .select()
-      .from(usersTable)
-      .where(eq(usersTable[type], value));
-    return user;
+
+  async findById(id: string): Promise<User | null> {
+    return this.usersRepository.findOne({ where: { id } });
+  }
+
+  async findByEmail(email: string): Promise<User | null> {
+    return this.usersRepository.findOne({ where: { email } });
+  }
+
+  async findByUsername(username: string): Promise<User | null> {
+    return this.usersRepository.findOne({ where: { username } });
+  }
+
+  async markEmailAsVerified(userId: string): Promise<void> {
+    const user = await this.findById(userId);
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+    user.isEmailVerified = true;
+    await this.usersRepository.save(user);
+  }
+  private async ensureEmailAndUsernameAreUnique(dto: SignUpDto): Promise<void> {
+    const [emailExist, usernameExist] = await Promise.all([
+      this.usersRepository.findOne({ where: { email: dto.email } }),
+      this.usersRepository.findOne({ where: { username: dto.username } }),
+    ]);
+
+    if (emailExist) {
+      throw new ConflictException('Email already exists');
+    }
+
+    if (usernameExist) {
+      throw new ConflictException('Username already exists');
+    }
   }
 }

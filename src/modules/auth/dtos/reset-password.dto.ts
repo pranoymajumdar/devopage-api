@@ -1,6 +1,5 @@
 import { Transform } from 'class-transformer';
 import {
-  IsEmail,
   IsNotEmpty,
   IsString,
   Matches,
@@ -8,13 +7,11 @@ import {
   MinLength,
 } from 'class-validator';
 
-export class SignInDto {
-  @IsString({ message: 'Email must be a string.' })
-  @IsNotEmpty({ message: 'Email is required.' })
-  @IsEmail({}, { message: 'Email must be valid.' })
-  @MaxLength(100, { message: 'Email must be at most 100 characters.' })
-  @Transform(({ value }: { value: string }) => value.toLowerCase().trim())
-  email: string;
+export class ResetPasswordDto {
+  @IsNotEmpty({ message: 'Token is required.' })
+  @IsString({ message: 'Token must be a string.' })
+  @Transform(({ value }: { value: string }) => value.trim())
+  token: string;
 
   @IsString({ message: 'Password must be a string.' })
   @IsNotEmpty({ message: 'Password is required.' })
