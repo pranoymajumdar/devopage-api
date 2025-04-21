@@ -7,6 +7,7 @@ import {
   SignInDto,
   ForgotPasswordDto,
   VerifyEmailDto,
+  ResetPasswordDto,
 } from './dtos';
 import { EmailService } from '../email/email.service';
 import { SessionService } from './session/session.service';
@@ -76,6 +77,12 @@ export class AuthService {
       message: 'Sign out successful',
     };
   }
+
+  /**
+   * Verifies a user's email address.
+   * @param dto - containing the verification token
+   * @returns An ApiResponse indicating whether the email verification was successful
+   */
   async verifyEmail(dto: VerifyEmailDto): Promise<ApiResponse<null>> {
     const verify = await this.emailService.verifyEmail(dto.token);
     if (!verify) {
@@ -86,13 +93,27 @@ export class AuthService {
       message: 'Verify email successful',
     };
   }
-  // async forgotPassword(dto: ForgotPasswordDto): Promise<ApiResponse<null>> {
-  //   return {
-  //     status: true,
-  //     message: 'A reset password email has  been sent to your email.',
-  //   }
-  // }
-  //   async resetPassword(): Promise<ApiResponse> {
-  //     return 'reset password';
-  //   }
+
+  async forgotPassword(dto: ForgotPasswordDto): Promise<ApiResponse<null>> {
+    const user = await this.usersService.findByEmail(dto.email);
+    if (!user) throw new UnauthorizedException('Invalid email');
+
+    const result = await this.emailService.sendPasswordResetEmail(user);
+    return {
+      status: true,
+      message: result
+        ? 'A reset password email has  been sent to your email.'
+        : 'Failed to send reset password email please try again.',
+    };
+  }
+  async resetPassword(dto: ResetPasswordDto): Promise<ApiResponse<null>> {
+    const userId = await this.emailService.verifyPasswordReset(dto.token);
+    if (!userId) throw new UnauthorizedException('Invalid or expired session');
+    await this.usersService.updatePassword(userId, dto.password);
+
+    return {
+      status: true,
+      message: 'Your password has been successfully reset.',
+    };
+  }
 }

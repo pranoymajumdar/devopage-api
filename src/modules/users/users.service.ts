@@ -86,6 +86,14 @@ export class UsersService {
     await this.usersRepository.save(user);
   }
 
+  async updatePassword(userId: string, newPassword: string): Promise<void> {
+    const user = await this.findById(userId);
+    if (!user) {
+      throw new NotFoundException('Invalid or expired password reset token.');
+    }
+    user.password = newPassword;
+    await this.usersRepository.save(user);
+  }
   /**
    * Ensure that the email and username are unique
    * @param dto - containing user details

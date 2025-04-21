@@ -69,6 +69,43 @@ export class EmailService {
   }
 
   /**
+   * Sends an reset password link to the user.
+   * @param user - The user to whom the verification email will be sent.
+   */
+  async sendPasswordResetEmail(user: User): Promise<boolean> {
+    const token = this.generateVerificationToken(user.id);
+    const verificationLink = `${process.env.FRONTEND_URL}/reset-password?token=${token}`;
+    const resend = new Resend(this.configService.getOrThrow('RESEND_API_KEY'));
+
+    const { error } = await resend.emails.send({
+      from: `Reset Password <onboarding@resend.dev>`,
+      to: [user.email],
+      subject: 'Reset your password',
+      html: this.buildPasswordResetEmailTemplate(
+        user.username,
+        verificationLink,
+      ),
+    });
+
+    if (error) {
+      this.logger.error(`Failed to send email: ${error.message}`);
+      return false;
+    }
+    return true;
+  }
+  async verifyPasswordReset(token: string): Promise<string | null> {
+    const payload = await tryCatch(
+      this.jwtService.verifyAsync<{ userId: string }>(token),
+    );
+
+    if (payload.error) {
+      return null;
+    }
+
+    return payload.data.userId;
+  }
+
+  /**
    * Build HTML template for verification emails
    */
   private buildVerificationEmailTemplate(

@@ -1,18 +1,27 @@
-import { createParamDecorator, ExecutionContext } from '@nestjs/common';
+import { createParamDecorator, type ExecutionContext } from '@nestjs/common';
 import type { Request } from 'express';
 
 /**
- * Parameter decorator to access cookies from the request
- * @param data Optional key to retrieve a specific cookie
+ * Parameter decorator to access cookies from the request.
+ * @param cookieName Optional key to retrieve a specific cookie
+ * @param defaultValue Optional default value if the cookie doesn't exist
  * @returns The specific cookie value if a key is provided, otherwise all cookies
  */
 export const Cookies = createParamDecorator(
-  <T>(data: string | undefined, ctx: ExecutionContext): T => {
-    const req = ctx.switchToHttp().getRequest<Request>();
-    if (data) {
-      return req.cookies[data] as T;
+  (cookieName: string | undefined, ctx: ExecutionContext): unknown => {
+    const request = ctx.switchToHttp().getRequest<Request>();
+
+    // Ensure cookies object exists
+    if (!request.cookies) {
+      return cookieName ? undefined : {};
     }
 
-    return req.cookies as T;
+    // If a specific cookie is requested
+    if (cookieName) {
+      return request.cookies[cookieName];
+    }
+
+    // Return all cookies
+    return request.cookies;
   },
 );

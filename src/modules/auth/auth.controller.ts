@@ -6,7 +6,11 @@ import { SignUpDto } from './dtos/sign-up.dto';
 import type { Response } from 'express';
 import { SignInDto } from './dtos/sign-in.dto';
 import { Cookies } from '@/common/decorators/cookies.decorator';
-import { VerifyEmailDto } from '@/modules/auth/dtos';
+import {
+  ForgotPasswordDto,
+  ResetPasswordDto,
+  VerifyEmailDto,
+} from '@/modules/auth/dtos';
 
 @Controller('auth')
 export class AuthController {
@@ -41,14 +45,16 @@ export class AuthController {
     return this.authService.verifyEmail(dto);
   }
 
-  // @Post('forgot-password')
-  // forgotPassword() {
-  //   return 'forgot password';
-
-  // }
-  // @Post('reset-password')
-  // resetPassword() {
-  //   return 'reset password';
-
-  // }
+  @Post('forgot-password')
+  async forgotPassword(
+    @Body() dto: ForgotPasswordDto,
+  ): Promise<ApiResponse<null>> {
+    return this.authService.forgotPassword(dto);
+  }
+  @Post('reset-password')
+  async resetPassword(
+    @Body() dto: ResetPasswordDto,
+  ): Promise<ApiResponse<null>> {
+    return this.authService.resetPassword(dto);
+  }
 }
