@@ -1,11 +1,10 @@
-import { Body, Controller, Get, Post, Res, UseGuards } from '@nestjs/common';
+import { Body, Controller, Post, Res } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import type { ApiResponse } from '@/common/interface/response.interface';
 import type { SafeUser } from '../users/users.entity';
 import { SignUpDto } from './dtos/sign-up.dto';
 import type { Response } from 'express';
 import { SignInDto } from './dtos/sign-in.dto';
-import { AuthGuard } from '@/common/guards/auth.guard';
 import { Cookies } from '@/common/decorators/cookies.decorator';
 
 @Controller('auth')
@@ -28,13 +27,6 @@ export class AuthController {
     return this.authService.signIn(dto, res);
   }
 
-  @Get('me')
-  @UseGuards(AuthGuard)
-  getMe() {
-    return {
-      status: 'success',
-    };
-  }
   @Post('sign-out')
   async signOut(
     @Cookies('sessionId') sessionId: string,
