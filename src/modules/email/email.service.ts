@@ -1,33 +1,36 @@
-import { Inject, Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import type { User } from '../users/users.entity';
-import * as crypto from 'node:crypto';
-import * as bcrypt from 'bcrypt';
 import { ConfigService } from '@nestjs/config';
 import { Resend } from 'resend';
-import { Cache } from 'cache-manager';
-import { CACHE_MANAGER } from '@nestjs/cache-manager';
+import { JwtService } from '@nestjs/jwt';
+import { UsersService } from '@/modules/users/users.service';
+import { tryCatch } from '@/common/utils/try-catch.utils';
 
 @Injectable()
 export class EmailService {
   private readonly logger: Logger = new Logger(EmailService.name);
   constructor(
-    @Inject(CACHE_MANAGER) private readonly cacheManager: Cache,
+    private readonly usersService: UsersService,
     private readonly configService: ConfigService,
+    private readonly jwtService: JwtService,
   ) {}
 
-  private async prepareVerificationToken(userId: string): Promise<string> {
-    const token = crypto.randomBytes(32).toString('hex');
-    const hashedToken = await bcrypt.hash(token, 10);
-    const expirationTime = 60 * 60 * 24; // 24 hours in seconds
-    const cacheKey = `email-verification:${hashedToken}`;
-    await this.cacheManager.set(cacheKey, { userId }, expirationTime * 1000);
-
-    return token;
+  /**
+   * Generates a signed JWT token for email verification.
+   * @param userId - The ID of the user to include in the token payload.
+   * @returns A JWT token string.
+   */
+  private generateVerificationToken(userId: string): string {
+    return this.jwtService.sign({ userId });
   }
 
+  /**
+   * Sends an email verification link to the user.
+   * @param user - The user to whom the verification email will be sent.
+   */
   async sendVerificationEmail(user: User): Promise<void> {
-    const init = await this.prepareVerificationToken(user.id);
-    const verificationLink = `${process.env.FRONTEND_URL}/verify-email?token=${init}`;
+    const token = this.generateVerificationToken(user.id);
+    const verificationLink = `${process.env.FRONTEND_URL}/verify-email?token=${token}`;
 
     const resend = new Resend(this.configService.getOrThrow('RESEND_API_KEY'));
     const { error } = await resend.emails.send({
@@ -43,6 +46,26 @@ export class EmailService {
     if (error) {
       this.logger.error(`Failed to send email: ${error.message}`);
     }
+  }
+
+  /**
+   * Verifies the email token and marks the user's email as verified if valid.
+   * @param token - The JWT email verification token received from the user.
+   * @returns True if verification succeeded, false otherwise.
+   */
+  async verifyEmail(token: string): Promise<boolean> {
+    const payload = await tryCatch(
+      this.jwtService.verifyAsync<{ userId: string }>(token),
+    );
+
+    if (payload.error) {
+      return false;
+    }
+
+    const user = await this.usersService.findById(payload.data.userId);
+    if (!user) return false;
+    await this.usersService.markEmailAsVerified(user.id);
+    return true;
   }
 
   /**

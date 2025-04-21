@@ -2,7 +2,12 @@ import { ApiResponse } from '@/common/interface/response.interface';
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import type { SafeUser } from '../users/users.entity';
 import { UsersService } from '../users/users.service';
-import type { SignUpDto, SignInDto } from './dtos';
+import {
+  SignUpDto,
+  SignInDto,
+  ForgotPasswordDto,
+  VerifyEmailDto,
+} from './dtos';
 import { EmailService } from '../email/email.service';
 import { SessionService } from './session/session.service';
 import type { Response } from 'express';
@@ -54,6 +59,13 @@ export class AuthService {
       data: user.sanitize(),
     };
   }
+
+  /**
+   * Signs out a user by removing their session.
+   * @param sessionId - The ID of the session to remove.
+   * @param res - The HTTP response object.
+   * @returns An ApiResponse indicating whether sign-out was successful.
+   */
   async signOut(sessionId: string, res: Response): Promise<ApiResponse<null>> {
     const result = await this.sessionService.removeUserSession(sessionId, res);
     if (!result) {
@@ -64,13 +76,23 @@ export class AuthService {
       message: 'Sign out successful',
     };
   }
-  //   async forgotPassword(): Promise<ApiResponse> {
-  //     return 'forgot password';
+  async verifyEmail(dto: VerifyEmailDto): Promise<ApiResponse<null>> {
+    const verify = await this.emailService.verifyEmail(dto.token);
+    if (!verify) {
+      throw new UnauthorizedException('Invalid or expired token');
+    }
+    return {
+      status: true,
+      message: 'Verify email successful',
+    };
+  }
+  // async forgotPassword(dto: ForgotPasswordDto): Promise<ApiResponse<null>> {
+  //   return {
+  //     status: true,
+  //     message: 'A reset password email has  been sent to your email.',
   //   }
+  // }
   //   async resetPassword(): Promise<ApiResponse> {
   //     return 'reset password';
-  //   }
-  //   async verifyEmail(): Promise<ApiResponse> {
-  //     return 'verify email';
   //   }
 }

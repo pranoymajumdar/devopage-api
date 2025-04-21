@@ -6,6 +6,7 @@ import { SignUpDto } from './dtos/sign-up.dto';
 import type { Response } from 'express';
 import { SignInDto } from './dtos/sign-in.dto';
 import { Cookies } from '@/common/decorators/cookies.decorator';
+import { VerifyEmailDto } from '@/modules/auth/dtos';
 
 @Controller('auth')
 export class AuthController {
@@ -35,18 +36,19 @@ export class AuthController {
     return this.authService.signOut(sessionId, res);
   }
 
+  @Post('verify-email')
+  async verifyEmail(@Body() dto: VerifyEmailDto): Promise<ApiResponse<null>> {
+    return this.authService.verifyEmail(dto);
+  }
+
   // @Post('forgot-password')
   // forgotPassword() {
   //   return 'forgot password';
-  // }
 
+  // }
   // @Post('reset-password')
   // resetPassword() {
   //   return 'reset password';
-  // }
 
-  // @Post('verify-email')
-  // verifyEmail() {
-  //   return 'verify email';
   // }
 }
