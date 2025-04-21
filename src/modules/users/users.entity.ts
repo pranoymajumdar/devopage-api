@@ -29,7 +29,7 @@ export class User {
   @Index('user_username_index', { unique: true })
   username: string;
 
-  @Column('text', { select: false })
+  @Column('text')
   password: string;
 
   @Column('text', { unique: true })

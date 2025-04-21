@@ -1,27 +1,47 @@
-import { Body, Controller, Post } from '@nestjs/common';
+import { Body, Controller, Get, Post, Res, UseGuards } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import type { ApiResponse } from '@/common/interface/response.interface';
 import type { SafeUser } from '../users/users.entity';
 import { SignUpDto } from './dtos/sign-up.dto';
+import type { Response } from 'express';
+import { SignInDto } from './dtos/sign-in.dto';
+import { AuthGuard } from '@/common/guards/auth.guard';
+import { Cookies } from '@/common/decorators/cookies.decorator';
 
 @Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
   @Post('sign-up')
-  async signUp(@Body() dto: SignUpDto): Promise<ApiResponse<SafeUser>> {
-    return this.authService.signUp(dto);
+  async signUp(
+    @Body() dto: SignUpDto,
+    @Res({ passthrough: true }) res: Response,
+  ): Promise<ApiResponse<SafeUser>> {
+    return this.authService.signUp(dto, res);
   }
 
-  // @Post('sign-in')
-  // signIn() {
-  //   return 'sign in';
-  // }
+  @Post('sign-in')
+  async signIn(
+    @Body() dto: SignInDto,
+    @Res({ passthrough: true }) res: Response,
+  ): Promise<ApiResponse<SafeUser>> {
+    return this.authService.signIn(dto, res);
+  }
 
-  // @Post('sign-out')
-  // signOut() {
-  //   return 'sign out';
-  // }
+  @Get('me')
+  @UseGuards(AuthGuard)
+  getMe() {
+    return {
+      status: 'success',
+    };
+  }
+  @Post('sign-out')
+  async signOut(
+    @Cookies('sessionId') sessionId: string,
+    @Res({ passthrough: true }) res: Response,
+  ): Promise<ApiResponse<null>> {
+    return this.authService.signOut(sessionId, res);
+  }
 
   // @Post('forgot-password')
   // forgotPassword() {
