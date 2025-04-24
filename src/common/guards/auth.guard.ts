@@ -13,6 +13,7 @@ import type { ISession } from '@/common/interface/session.interface';
 @Injectable()
 export class AuthGuard implements CanActivate {
   constructor(@Inject(CACHE_MANAGER) private readonly cacheManager: Cache) {}
+
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context.switchToHttp().getRequest<Request>();
     const sessionId = request.cookies.sessionId as string | undefined;

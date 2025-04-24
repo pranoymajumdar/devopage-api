@@ -4,7 +4,7 @@ export interface ISession {
   id: string;
   user: {
     id: string;
-    role: UserRole[];
+    roles: UserRole[];
     email: string;
   };
 }

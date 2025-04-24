@@ -1,4 +1,4 @@
-import { ISessionData } from '@/modules/auth-old/interface/session.interface';
+import { ISessionData } from '@/common/interface/session.interface';
 import 'express';
 
 declare module 'express' {
