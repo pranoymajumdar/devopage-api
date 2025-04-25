@@ -1,7 +1,14 @@
-import { Body, Controller, Post, Res } from '@nestjs/common';
+import {
+  Body,
+  ClassSerializerInterceptor,
+  Controller,
+  Post,
+  Res,
+  UseInterceptors,
+} from '@nestjs/common';
 import { AuthService } from './auth.service';
 import type { ApiResponse } from '@/common/interface/response.interface';
-import type { SafeUser } from '../users/users.entity';
+import type { User } from '../users/users.entity';
 import { SignUpDto } from './dtos/sign-up.dto';
 import type { Response } from 'express';
 import { SignInDto } from './dtos/sign-in.dto';
@@ -17,18 +24,20 @@ export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
   @Post('sign-up')
+  @UseInterceptors(ClassSerializerInterceptor)
   async signUp(
     @Body() dto: SignUpDto,
     @Res({ passthrough: true }) res: Response,
-  ): Promise<ApiResponse<SafeUser>> {
+  ): Promise<ApiResponse<User>> {
     return this.authService.signUp(dto, res);
   }
 
   @Post('sign-in')
+  @UseInterceptors(ClassSerializerInterceptor)
   async signIn(
     @Body() dto: SignInDto,
     @Res({ passthrough: true }) res: Response,
-  ): Promise<ApiResponse<SafeUser>> {
+  ): Promise<ApiResponse<User>> {
     return this.authService.signIn(dto, res);
   }
 

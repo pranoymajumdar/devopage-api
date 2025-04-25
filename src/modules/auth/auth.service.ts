@@ -1,6 +1,6 @@
 import { ApiResponse } from '@/common/interface/response.interface';
 import { Injectable, Logger, UnauthorizedException } from '@nestjs/common';
-import type { SafeUser, User } from '../users/users.entity';
+import type { User } from '../users/users.entity';
 import { UsersService } from '../users/users.service';
 import {
   SignUpDto,
@@ -32,14 +32,14 @@ export class AuthService {
    * @param res - the response object
    * @returns ApiResponse with the created user
    */
-  async signUp(dto: SignUpDto, res: Response): Promise<ApiResponse<SafeUser>> {
+  async signUp(dto: SignUpDto, res: Response): Promise<ApiResponse<User>> {
     const user = await this.usersService.create(dto);
     void this.sendVerificationEmail(user);
     await this.sessionService.createUserSession(user, res);
     return {
       status: true,
       message: 'Sign up successful',
-      data: user.sanitize(),
+      data: user,
     };
   }
 
@@ -49,7 +49,7 @@ export class AuthService {
    * @param res - the response object
    * @returns ApiResponse with the signed-in user
    */
-  async signIn(dto: SignInDto, res: Response): Promise<ApiResponse<SafeUser>> {
+  async signIn(dto: SignInDto, res: Response): Promise<ApiResponse<User>> {
     const user = await this.usersService.findByEmail(dto.email);
     if (!user) {
       throw new UnauthorizedException('Invalid email or password');
@@ -62,7 +62,7 @@ export class AuthService {
     return {
       status: true,
       message: 'Sign in successful',
-      data: user.sanitize(),
+      data: user,
     };
   }
 

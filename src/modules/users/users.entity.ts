@@ -9,6 +9,7 @@ import {
   UpdateDateColumn,
 } from 'typeorm';
 import * as bcrypt from 'bcrypt';
+import { Exclude } from 'class-transformer';
 
 export enum UserRole {
   ADMIN = 'admin',
@@ -30,6 +31,7 @@ export class User {
   username: string;
 
   @Column('text')
+  @Exclude()
   password: string;
 
   @Column('text', { unique: true })
@@ -62,18 +64,7 @@ export class User {
     return bcrypt.compare(inputPassword, this.password);
   }
 
-  sanitize(): Omit<
-    this,
-    'password' | 'hashPassword' | 'validatePassword' | 'sanitize'
-  > {
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { password, ...rest } = this;
-    return rest;
-  }
-
   constructor(user: Partial<User>) {
     Object.assign(this, user);
   }
 }
-
-export type SafeUser = ReturnType<typeof User.prototype.sanitize>;

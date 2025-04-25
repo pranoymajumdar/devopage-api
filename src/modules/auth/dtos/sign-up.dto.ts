@@ -1,3 +1,4 @@
+import { IsUserUnique } from '@/modules/users/validators/is-user-unique.validator';
 import { Transform } from 'class-transformer';
 import {
   IsString,
@@ -6,6 +7,7 @@ import {
   MinLength,
   MaxLength,
   Matches,
+  Validate,
 } from 'class-validator';
 
 export class SignUpDto {
@@ -24,6 +26,7 @@ export class SignUpDto {
     message: 'Username can only contain letters, numbers, and underscores.',
   })
   @Transform(({ value }: { value: string }) => value.toLowerCase().trim())
+  @Validate(IsUserUnique)
   username: string;
 
   @IsString({ message: 'Email must be a string.' })
@@ -31,6 +34,7 @@ export class SignUpDto {
   @IsEmail({}, { message: 'Email must be valid.' })
   @MaxLength(100, { message: 'Email must be at most 100 characters.' })
   @Transform(({ value }: { value: string }) => value.toLowerCase().trim())
+  @Validate(IsUserUnique)
   email: string;
 
   @IsString({ message: 'Password must be a string.' })

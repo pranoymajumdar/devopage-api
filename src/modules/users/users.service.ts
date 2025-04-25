@@ -1,5 +1,4 @@
 import {
-  ConflictException,
   Injectable,
   InternalServerErrorException,
   Logger,
@@ -25,8 +24,6 @@ export class UsersService {
    * @returns Created user
    */
   async create(dto: SignUpDto): Promise<User> {
-    await this.ensureEmailAndUsernameAreUnique(dto);
-
     const user = this.usersRepository.create({
       name: dto.name,
       email: dto.email,
@@ -86,6 +83,11 @@ export class UsersService {
     await this.usersRepository.save(user);
   }
 
+  /**
+   * Update a user's password
+   * @param userId - The ID of the user whose password is being updated
+   * @param newPassword - The new password to set for the user
+   */
   async updatePassword(userId: string, newPassword: string): Promise<void> {
     const user = await this.findById(userId);
     if (!user) {
@@ -93,21 +95,5 @@ export class UsersService {
     }
     user.password = newPassword;
     await this.usersRepository.save(user);
-  }
-  /**
-   * Ensure that the email and username are unique
-   * @param dto - containing user details
-   */
-  private async ensureEmailAndUsernameAreUnique(dto: SignUpDto): Promise<void> {
-    const existingUser = await this.usersRepository.findOne({
-      where: [{ email: dto.email }, { username: dto.username }],
-    });
-
-    if (existingUser) {
-      if (existingUser.email === dto.email) {
-        throw new ConflictException('Email already exists');
-      }
-      throw new ConflictException('Username already exists');
-    }
   }
 }

@@ -33,7 +33,7 @@ export class SessionService {
         key,
         {
           id: sessionId,
-          user: { id: user.id, email: user.email, role: user.roles },
+          user: { id: user.id, email: user.email, roles: user.roles },
         },
         expiresAt,
       ),
