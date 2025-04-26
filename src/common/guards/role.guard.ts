@@ -1,6 +1,7 @@
 import {
   CanActivate,
   ForbiddenException,
+  Injectable,
   type ExecutionContext,
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
@@ -9,6 +10,7 @@ import type { Request } from 'express';
 import type { ISession } from '../interface/session.interface';
 import { UserRole } from '@/modules/users/users.entity';
 
+@Injectable()
 export class RolesGuard implements CanActivate {
   constructor(private readonly reflector: Reflector) {}
 
@@ -22,15 +24,17 @@ export class RolesGuard implements CanActivate {
     const session: ISession | undefined = request.session;
 
     if (!requiredRoles || requiredRoles.length === 0) return true;
-    if (!session?.user.roles)
+    if (!session?.user.role)
       throw new ForbiddenException('Access denied. No session or roles.');
 
-    const userRoles = session.user.roles;
+    const userRole = session.user.role;
 
-    const hasRole = requiredRoles.some((role) => userRoles.includes(role));
-    if (!hasRole) {
+    const canAccess = requiredRoles.some(
+      (requiredRole) => userRole >= requiredRole,
+    );
+    if (!canAccess) {
       throw new ForbiddenException(
-        `Access denied. Required roles: ${requiredRoles.join(', ')}`,
+        `Access denied. Required roles: ${requiredRoles.join(',')}`,
       );
     }
     return true;

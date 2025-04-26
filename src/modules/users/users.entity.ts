@@ -12,9 +12,9 @@ import * as bcrypt from 'bcrypt';
 import { Exclude } from 'class-transformer';
 
 export enum UserRole {
-  ADMIN = 'admin',
-  USER = 'user',
-  MODERATOR = 'moderator',
+  ADMIN = 2,
+  MODERATOR = 1,
+  USER = 0,
 }
 
 @Entity({ name: 'users' })
@@ -40,9 +40,9 @@ export class User {
   @Column('bool', { name: 'is_email_verified', default: false })
   isEmailVerified: boolean;
 
-  @Column('enum', { enum: UserRole, array: true, default: [UserRole.USER] })
+  @Column({ type: 'smallint', enum: UserRole, default: UserRole.USER })
   @Index('user_role_index')
-  roles: UserRole[];
+  role: UserRole;
 
   @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;
