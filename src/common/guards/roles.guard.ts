@@ -2,6 +2,7 @@ import {
   CanActivate,
   ForbiddenException,
   Injectable,
+  UnauthorizedException,
   type ExecutionContext,
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
@@ -24,8 +25,7 @@ export class RolesGuard implements CanActivate {
     const session: ISession | undefined = request.session;
 
     if (!requiredRoles || requiredRoles.length === 0) return true;
-    if (!session?.user.role)
-      throw new ForbiddenException('Access denied. No session or roles.');
+    if (!session?.user) throw new UnauthorizedException();
 
     const userRole = session.user.role;
 
