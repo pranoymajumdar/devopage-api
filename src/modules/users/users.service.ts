@@ -96,4 +96,10 @@ export class UsersService {
     user.password = newPassword;
     await this.usersRepository.save(user);
   }
+
+  /**
+   * Get all the users
+   * @returns An array of users.
+   */
+  async getAllUsers(): Promise<User[]> {}
 }
