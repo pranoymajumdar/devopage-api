@@ -1,0 +1,24 @@
+meta {
+  name: sign-up
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{url}}/{{module}}/sign-up
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "name": "Pranoy Majumdar",
+    "username": "pranoy",
+    "email": "pranoy.dev@proton.me",
+    "password": "Secured&Password123"
+  }
+}
+
+vars:pre-request {
+  module: auth
+}

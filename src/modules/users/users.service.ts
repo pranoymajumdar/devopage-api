@@ -9,6 +9,7 @@ import { Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { tryCatch } from '@/common/utils/try-catch.utils';
 import { SignUpDto } from '../auth/dtos';
+import { SessionService } from '@/common/services/session.service';
 
 @Injectable()
 export class UsersService {
@@ -16,6 +17,7 @@ export class UsersService {
   constructor(
     @InjectRepository(User)
     private readonly usersRepository: Repository<User>,
+    private readonly sessionService: SessionService,
   ) {}
 
   /**
@@ -101,5 +103,7 @@ export class UsersService {
    * Get all the users
    * @returns An array of users.
    */
-  async getAllUsers(): Promise<User[]> {}
+  async findAll(): Promise<User[]> {
+    return this.usersRepository.find();
+  }
 }

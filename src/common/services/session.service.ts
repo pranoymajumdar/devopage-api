@@ -16,7 +16,14 @@ export class SessionService {
     @Inject(CACHE_MANAGER) private readonly cacheManager: Cache,
     private readonly configService: ConfigService,
   ) {}
-
+  private getSessionData(sessionId: string, user: User): ISession {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { password, ...userData } = user;
+    return {
+      id: sessionId,
+      user: userData,
+    };
+  }
   /**
    * Creates a user session
    * @param user - The user to create a session for
@@ -31,10 +38,7 @@ export class SessionService {
     const cacheResult = await tryCatch(
       this.cacheManager.set<ISession>(
         key,
-        {
-          id: sessionId,
-          user: { id: user.id, email: user.email, role: user.role },
-        },
+        this.getSessionData(sessionId, user),
         expiresAt,
       ),
     );
@@ -74,5 +78,27 @@ export class SessionService {
       return true;
     }
     return false;
+  }
+
+  /**
+   * Invalidates and refreshes a user session
+   * @param sessionId - The ID of the session to invalidate
+   * @param user - The user associated with the session
+   * @returns A promise that resolves when the session is refreshed
+   */
+
+  async invalidateUserSession(sessionId: string, user: User): Promise<void> {
+    const key = `session:${sessionId}`;
+    const data = await this.cacheManager.get<ISession>(key);
+
+    const expiresAt = 60 * 60 * 24 * 1000;
+    if (data) {
+      await this.cacheManager.del(key);
+      await this.cacheManager.set(
+        key,
+        this.getSessionData(sessionId, user),
+        expiresAt,
+      );
+    }
   }
 }

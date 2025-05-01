@@ -1,5 +1,9 @@
-import { ApiResponse } from '@/common/interface/response.interface';
-import { Injectable, Logger, UnauthorizedException } from '@nestjs/common';
+import {
+  Injectable,
+  InternalServerErrorException,
+  Logger,
+  UnauthorizedException,
+} from '@nestjs/common';
 import type { User } from '../users/users.entity';
 import { UsersService } from '../users/users.service';
 import {
@@ -9,7 +13,7 @@ import {
   VerifyEmailDto,
   ResetPasswordDto,
 } from './dtos';
-import { SessionService } from './session/session.service';
+import { SessionService } from '../../common/services/session.service';
 import type { Response } from 'express';
 import { ConfigService } from '@nestjs/config';
 import { tryCatch } from '@/common/utils/try-catch.utils';
@@ -32,15 +36,11 @@ export class AuthService {
    * @param res - the response object
    * @returns ApiResponse with the created user
    */
-  async signUp(dto: SignUpDto, res: Response): Promise<ApiResponse<User>> {
+  async signUp(dto: SignUpDto, res: Response): Promise<User> {
     const user = await this.usersService.create(dto);
     void this.sendVerificationEmail(user);
     await this.sessionService.createUserSession(user, res);
-    return {
-      status: true,
-      message: 'Sign up successful',
-      data: user,
-    };
+    return user;
   }
 
   /**
@@ -49,7 +49,7 @@ export class AuthService {
    * @param res - the response object
    * @returns ApiResponse with the signed-in user
    */
-  async signIn(dto: SignInDto, res: Response): Promise<ApiResponse<User>> {
+  async signIn(dto: SignInDto, res: Response): Promise<User> {
     const user = await this.usersService.findByEmail(dto.email);
     if (!user) {
       throw new UnauthorizedException('Invalid email or password');
@@ -59,11 +59,7 @@ export class AuthService {
       throw new UnauthorizedException('Invalid email or password');
     }
     await this.sessionService.createUserSession(user, res);
-    return {
-      status: true,
-      message: 'Sign in successful',
-      data: user,
-    };
+    return user;
   }
 
   /**
@@ -72,15 +68,12 @@ export class AuthService {
    * @param res - The HTTP response object.
    * @returns An ApiResponse indicating whether sign-out was successful.
    */
-  async signOut(sessionId: string, res: Response): Promise<ApiResponse<null>> {
+  async signOut(sessionId: string, res: Response): Promise<null> {
     const result = await this.sessionService.removeUserSession(sessionId, res);
     if (!result) {
       throw new UnauthorizedException('Invalid or expired session');
     }
-    return {
-      status: true,
-      message: 'Sign out successful',
-    };
+    return null;
   }
 
   /**
@@ -88,15 +81,12 @@ export class AuthService {
    * @param dto - containing the verification token
    * @returns An ApiResponse indicating whether the email verification was successful
    */
-  async verifyEmail(dto: VerifyEmailDto): Promise<ApiResponse<null>> {
+  async verifyEmail(dto: VerifyEmailDto): Promise<null> {
     const verify = await this.validateEmailVerificationToken(dto.token);
     if (!verify) {
       throw new UnauthorizedException('Invalid or expired token');
     }
-    return {
-      status: true,
-      message: 'Verify email successful',
-    };
+    return null;
   }
 
   /**
@@ -104,17 +94,15 @@ export class AuthService {
    * @param dto - containing the user's email address
    * @returns An ApiResponse indicating whether the password reset email was sent successfully
    */
-  async forgotPassword(dto: ForgotPasswordDto): Promise<ApiResponse<null>> {
+  async forgotPassword(dto: ForgotPasswordDto): Promise<null> {
     const user = await this.usersService.findByEmail(dto.email);
     if (!user) throw new UnauthorizedException('Invalid email');
 
     const result = await this.sendPasswordResetEmail(user);
-    return {
-      status: true,
-      message: result
-        ? 'A reset password email has  been sent to your email.'
-        : 'Failed to send reset password email please try again.',
-    };
+    if (!result) {
+      throw new InternalServerErrorException('Failed to send reset email');
+    }
+    return null;
   }
 
   /**
@@ -122,15 +110,12 @@ export class AuthService {
    * @param dto - containing the reset token and new password
    * @returns An ApiResponse indicating whether the password reset was successful
    */
-  async resetPassword(dto: ResetPasswordDto): Promise<ApiResponse<null>> {
+  async resetPassword(dto: ResetPasswordDto): Promise<null> {
     const userId = await this.validateResetPassword(dto.token);
     if (!userId) throw new UnauthorizedException('Invalid or expired session');
     await this.usersService.updatePassword(userId, dto.password);
 
-    return {
-      status: true,
-      message: 'Password reset successful',
-    };
+    return null;
   }
 
   /**

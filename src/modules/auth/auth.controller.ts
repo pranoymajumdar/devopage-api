@@ -7,7 +7,6 @@ import {
   UseInterceptors,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
-import type { ApiResponse } from '@/common/interface/response.interface';
 import type { User } from '../users/users.entity';
 import { SignUpDto } from './dtos/sign-up.dto';
 import type { Response } from 'express';
@@ -28,7 +27,7 @@ export class AuthController {
   async signUp(
     @Body() dto: SignUpDto,
     @Res({ passthrough: true }) res: Response,
-  ): Promise<ApiResponse<User>> {
+  ): Promise<User> {
     return this.authService.signUp(dto, res);
   }
 
@@ -37,7 +36,7 @@ export class AuthController {
   async signIn(
     @Body() dto: SignInDto,
     @Res({ passthrough: true }) res: Response,
-  ): Promise<ApiResponse<User>> {
+  ): Promise<User> {
     return this.authService.signIn(dto, res);
   }
 
@@ -45,25 +44,21 @@ export class AuthController {
   async signOut(
     @Cookies('sessionId') sessionId: string,
     @Res({ passthrough: true }) res: Response,
-  ): Promise<ApiResponse<null>> {
+  ): Promise<null> {
     return this.authService.signOut(sessionId, res);
   }
 
   @Post('verify-email')
-  async verifyEmail(@Body() dto: VerifyEmailDto): Promise<ApiResponse<null>> {
+  async verifyEmail(@Body() dto: VerifyEmailDto): Promise<null> {
     return this.authService.verifyEmail(dto);
   }
 
   @Post('forgot-password')
-  async forgotPassword(
-    @Body() dto: ForgotPasswordDto,
-  ): Promise<ApiResponse<null>> {
+  async forgotPassword(@Body() dto: ForgotPasswordDto): Promise<null> {
     return this.authService.forgotPassword(dto);
   }
   @Post('reset-password')
-  async resetPassword(
-    @Body() dto: ResetPasswordDto,
-  ): Promise<ApiResponse<null>> {
+  async resetPassword(@Body() dto: ResetPasswordDto): Promise<null> {
     return this.authService.resetPassword(dto);
   }
 }
