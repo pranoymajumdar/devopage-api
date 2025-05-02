@@ -21,7 +21,6 @@ export class RolesGuard implements CanActivate {
       [ctx.getHandler(), ctx.getClass()],
     );
     const request = ctx.switchToHttp().getRequest<Request>();
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     const session: ISession | undefined = request.session;
 
     if (!requiredRoles || requiredRoles.length === 0) return true;

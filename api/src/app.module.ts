@@ -24,7 +24,6 @@ import { createKeyv } from '@keyv/redis';
         url: configService.getOrThrow('DATABASE_URL'),
         autoLoadEntities: true,
         synchronize: configService.get('NODE_ENV') !== 'production',
-        // entities: [__dirname + '/**/*.entity{.ts,.js}'],
       }),
       inject: [ConfigService],
     }),
